@@ -3,7 +3,7 @@
 
 import { Answer } from "../types";
 
-const GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbytweVjGmDxDDlPOu-IVglH7EHoGi0nOap_dxpV88Is4SeD1oNGYFtAztYDlkX07VXpzw/exec';
+const GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw2YjUsnsA88kOVCIhQBTDGhk3yFr1P_dX8qYfW8BOEazrdz_wPNp9lwE0Z8stBxl2tKQ/exec';
 
 export class GoogleSheetsService {
   private static instance: GoogleSheetsService;
