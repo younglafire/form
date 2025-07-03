@@ -66,22 +66,21 @@ function getAvailableAnswers() {
       sheet = spreadsheet.insertSheet(ANSWERS_SHEET_NAME);
       // Add headers
       sheet.getRange(1, 1, 1, 2).setValues([['ID', 'Text']]);
-      // Add sample data
-      sheet.getRange(2, 1, 4, 2).setValues([
-        ['1', 'First Available Option'],
-        ['2', 'Second Available Option'], 
-        ['3', 'Third Available Option'],
-        ['4', 'Fourth Available Option']
+      // Add sample data matching your current data
+      sheet.getRange(2, 1, 3, 2).setValues([
+        ['1', 'Apple'],
+        ['2', 'Banana'], 
+        ['3', 'Orange']
       ]);
     }
     
     const data = sheet.getDataRange().getValues();
     
     // Skip header row and filter out empty rows
-    const answers = data.slice(1).map(row => ({
-      id: row[0] ? row[0].toString() : '',
+    const answers = data.slice(1).map((row, index) => ({
+      id: row[0] ? row[0].toString() : (index + 1).toString(),
       text: row[1] ? row[1].toString() : ''
-    })).filter(answer => answer.id && answer.text);
+    })).filter(answer => answer.text);
     
     return createCORSResponse({ answers });
       
@@ -115,7 +114,8 @@ function submitResponse(name, selectedAnswerId, timestamp) {
     let rowToDelete = -1;
     
     for (let i = 1; i < answersData.length; i++) {
-      if (answersData[i][0] && answersData[i][0].toString() === selectedAnswerId) {
+      const cellId = answersData[i][0] ? answersData[i][0].toString() : (i).toString();
+      if (cellId === selectedAnswerId) {
         selectedAnswerText = answersData[i][1] ? answersData[i][1].toString() : '';
         rowToDelete = i + 1; // +1 because sheet rows are 1-indexed
         break;
@@ -141,7 +141,7 @@ function submitResponse(name, selectedAnswerId, timestamp) {
   }
 }
 
-// Helper function to initialize sheets with sample data (run once)
+// Helper function to initialize sheets with your current data
 function initializeSheets() {
   const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
   
@@ -152,12 +152,10 @@ function initializeSheets() {
   }
   answersSheet.clear();
   answersSheet.getRange(1, 1, 1, 2).setValues([['ID', 'Text']]);
-  answersSheet.getRange(2, 1, 5, 2).setValues([
-    ['1', 'First Available Option'],
-    ['2', 'Second Available Option'], 
-    ['3', 'Third Available Option'],
-    ['4', 'Fourth Available Option'],
-    ['5', 'Fifth Available Option']
+  answersSheet.getRange(2, 1, 3, 2).setValues([
+    ['1', 'Apple'],
+    ['2', 'Banana'], 
+    ['3', 'Orange']
   ]);
   
   // Create Responses sheet

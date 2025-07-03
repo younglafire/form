@@ -90,11 +90,9 @@ export class GoogleSheetsService {
 
   private getMockAnswers(): Answer[] {
     return [
-      { id: '1', text: 'Option A - First Choice' },
-      { id: '2', text: 'Option B - Second Choice' },
-      { id: '3', text: 'Option C - Third Choice' },
-      { id: '4', text: 'Option D - Fourth Choice' },
-      { id: '5', text: 'Option E - Fifth Choice' },
+      { id: '1', text: 'Apple' },
+      { id: '2', text: 'Banana' },
+      { id: '3', text: 'Orange' },
     ];
   }
 }
