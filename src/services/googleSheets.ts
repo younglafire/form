@@ -5,7 +5,7 @@ import { Answer } from "../types";
 
 // Your Google Apps Script web app URL will go here
 // After you deploy your Apps Script, replace this with the actual URL
-const GOOGLE_APPS_SCRIPT_URL = 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE';
+const GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw057vpnIetRUmUt54-JwMGKsW1aJoYlcwx5Lpc06mMIB4ns8Zcq4pdXzpmF3mdDDOr/exec';
 
 export class GoogleSheetsService {
   private static instance: GoogleSheetsService;
