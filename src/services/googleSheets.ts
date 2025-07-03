@@ -3,8 +3,8 @@
 
 import { Answer } from "../types";
 
-// Replace this with your actual Google Apps Script web app URL
-// Follow the setup instructions in README.md to get your URL
+// Your Google Apps Script web app URL will go here
+// After you deploy your Apps Script, replace this with the actual URL
 const GOOGLE_APPS_SCRIPT_URL = 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE';
 
 export class GoogleSheetsService {
