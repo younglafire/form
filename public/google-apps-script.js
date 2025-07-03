@@ -16,7 +16,23 @@ const SPREADSHEET_ID = '1yiDxCaNusnf7d7GfDKp_zG9GyR35OEzpCxbi1xt5sF4';
 const ANSWERS_SHEET_NAME = 'Available Answers';
 const RESPONSES_SHEET_NAME = 'Responses';
 
+// CORS headers - CRITICAL for web app to work
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  'Content-Type': 'application/json'
+};
+
 function doGet(e) {
+  // Handle preflight OPTIONS request
+  if (e.parameter.method === 'OPTIONS') {
+    return ContentService
+      .createTextOutput('')
+      .setMimeType(ContentService.MimeType.JSON)
+      .setHeaders(CORS_HEADERS);
+  }
+  
   const action = e.parameter.action;
   
   if (action === 'getAnswers') {
@@ -25,11 +41,20 @@ function doGet(e) {
   
   return ContentService
     .createTextOutput(JSON.stringify({ error: 'Invalid action' }))
-    .setMimeType(ContentService.MimeType.JSON);
+    .setMimeType(ContentService.MimeType.JSON)
+    .setHeaders(CORS_HEADERS);
 }
 
 function doPost(e) {
   try {
+    // Handle preflight OPTIONS request
+    if (e.parameter && e.parameter.method === 'OPTIONS') {
+      return ContentService
+        .createTextOutput('')
+        .setMimeType(ContentService.MimeType.JSON)
+        .setHeaders(CORS_HEADERS);
+    }
+
     const data = JSON.parse(e.postData.contents);
     const action = data.action;
     
@@ -39,12 +64,14 @@ function doPost(e) {
     
     return ContentService
       .createTextOutput(JSON.stringify({ error: 'Invalid action' }))
-      .setMimeType(ContentService.MimeType.JSON);
+      .setMimeType(ContentService.MimeType.JSON)
+      .setHeaders(CORS_HEADERS);
       
   } catch (error) {
     return ContentService
       .createTextOutput(JSON.stringify({ error: error.toString() }))
-      .setMimeType(ContentService.MimeType.JSON);
+      .setMimeType(ContentService.MimeType.JSON)
+      .setHeaders(CORS_HEADERS);
   }
 }
 
@@ -57,16 +84,18 @@ function getAvailableAnswers() {
     const answers = data.slice(1).map(row => ({
       id: row[0].toString(),
       text: row[1]
-    })).filter(answer => answer.text); // Filter out empty rows
+    })).filter(answer => answer.text && answer.text.trim() !== ''); // Filter out empty rows
     
     return ContentService
       .createTextOutput(JSON.stringify({ answers }))
-      .setMimeType(ContentService.MimeType.JSON);
+      .setMimeType(ContentService.MimeType.JSON)
+      .setHeaders(CORS_HEADERS);
       
   } catch (error) {
     return ContentService
       .createTextOutput(JSON.stringify({ error: error.toString() }))
-      .setMimeType(ContentService.MimeType.JSON);
+      .setMimeType(ContentService.MimeType.JSON)
+      .setHeaders(CORS_HEADERS);
   }
 }
 
@@ -102,12 +131,14 @@ function submitResponse(name, selectedAnswerId, timestamp) {
     
     return ContentService
       .createTextOutput(JSON.stringify({ success: true }))
-      .setMimeType(ContentService.MimeType.JSON);
+      .setMimeType(ContentService.MimeType.JSON)
+      .setHeaders(CORS_HEADERS);
       
   } catch (error) {
     return ContentService
       .createTextOutput(JSON.stringify({ error: error.toString() }))
-      .setMimeType(ContentService.MimeType.JSON);
+      .setMimeType(ContentService.MimeType.JSON)
+      .setHeaders(CORS_HEADERS);
   }
 }
 
@@ -122,11 +153,12 @@ function initializeSheets() {
   }
   answersSheet.clear();
   answersSheet.getRange(1, 1, 1, 2).setValues([['ID', 'Text']]);
-  answersSheet.getRange(2, 1, 4, 2).setValues([
-    ['1', 'First Available Option'],
-    ['2', 'Second Available Option'], 
-    ['3', 'Third Available Option'],
-    ['4', 'Fourth Available Option']
+  answersSheet.getRange(2, 1, 5, 2).setValues([
+    ['1', 'Apple'],
+    ['2', 'Banana'], 
+    ['3', 'Orange'],
+    ['4', 'Grape'],
+    ['5', 'Strawberry']
   ]);
   
   // Create Responses sheet
@@ -136,4 +168,27 @@ function initializeSheets() {
   }
   responsesSheet.clear();
   responsesSheet.getRange(1, 1, 1, 3).setValues([['Name', 'Selected Answer', 'Timestamp']]);
+}
+
+// Test function to verify connection
+function testConnection() {
+  try {
+    const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const answersSheet = spreadsheet.getSheetByName(ANSWERS_SHEET_NAME);
+    const responsesSheet = spreadsheet.getSheetByName(RESPONSES_SHEET_NAME);
+    
+    console.log('✅ Spreadsheet found:', spreadsheet.getName());
+    console.log('✅ Available Answers sheet found:', answersSheet ? 'Yes' : 'No');
+    console.log('✅ Responses sheet found:', responsesSheet ? 'Yes' : 'No');
+    
+    if (answersSheet) {
+      const data = answersSheet.getDataRange().getValues();
+      console.log('Available answers data:', data);
+    }
+    
+    return 'Connection successful!';
+  } catch (error) {
+    console.error('❌ Connection failed:', error.toString());
+    return 'Connection failed: ' + error.toString();
+  }
 }
