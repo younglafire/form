@@ -51,8 +51,6 @@ function doPost(e) {
 function createCORSResponse(data) {
   const output = ContentService.createTextOutput(JSON.stringify(data));
   output.setMimeType(ContentService.MimeType.JSON);
-  
-  // Add CORS headers
   return output;
 }
 
@@ -61,26 +59,31 @@ function getAvailableAnswers() {
     const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
     let sheet = spreadsheet.getSheetByName(ANSWERS_SHEET_NAME);
     
-    // Create the sheet if it doesn't exist
     if (!sheet) {
-      sheet = spreadsheet.insertSheet(ANSWERS_SHEET_NAME);
-      // Add headers
-      sheet.getRange(1, 1, 1, 2).setValues([['ID', 'Text']]);
-      // Add sample data matching your current data
-      sheet.getRange(2, 1, 3, 2).setValues([
-        ['1', 'Apple'],
-        ['2', 'Banana'], 
-        ['3', 'Orange']
-      ]);
+      return createCORSResponse({ error: 'Available Answers sheet not found' });
     }
     
     const data = sheet.getDataRange().getValues();
     
-    // Skip header row and filter out empty rows
-    const answers = data.slice(1).map((row, index) => ({
-      id: row[0] ? row[0].toString() : (index + 1).toString(),
-      text: row[1] ? row[1].toString() : ''
-    })).filter(answer => answer.text);
+    if (data.length <= 1) {
+      return createCORSResponse({ answers: [] });
+    }
+    
+    // Skip header row and process data
+    const answers = [];
+    for (let i = 1; i < data.length; i++) {
+      const row = data[i];
+      const id = row[0] ? row[0].toString().trim() : '';
+      const text = row[1] ? row[1].toString().trim() : '';
+      
+      // Only include rows that have both ID and text
+      if (id && text) {
+        answers.push({
+          id: id,
+          text: text
+        });
+      }
+    }
     
     return createCORSResponse({ answers });
       
@@ -93,18 +96,16 @@ function submitResponse(name, selectedAnswerId, timestamp) {
   try {
     const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
     
-    // Get or create the answers sheet
+    // Get the answers sheet
     let answersSheet = spreadsheet.getSheetByName(ANSWERS_SHEET_NAME);
     if (!answersSheet) {
-      answersSheet = spreadsheet.insertSheet(ANSWERS_SHEET_NAME);
-      answersSheet.getRange(1, 1, 1, 2).setValues([['ID', 'Text']]);
+      throw new Error('Available Answers sheet not found');
     }
     
-    // Get or create the responses sheet
+    // Get the responses sheet
     let responsesSheet = spreadsheet.getSheetByName(RESPONSES_SHEET_NAME);
     if (!responsesSheet) {
-      responsesSheet = spreadsheet.insertSheet(RESPONSES_SHEET_NAME);
-      responsesSheet.getRange(1, 1, 1, 3).setValues([['Name', 'Selected Answer', 'Timestamp']]);
+      throw new Error('Responses sheet not found');
     }
     
     // Get the answer text before removing it
@@ -113,10 +114,11 @@ function submitResponse(name, selectedAnswerId, timestamp) {
     let selectedAnswerText = '';
     let rowToDelete = -1;
     
+    // Find the answer to remove
     for (let i = 1; i < answersData.length; i++) {
-      const cellId = answersData[i][0] ? answersData[i][0].toString() : (i).toString();
-      if (cellId === selectedAnswerId) {
-        selectedAnswerText = answersData[i][1] ? answersData[i][1].toString() : '';
+      const cellId = answersData[i][0] ? answersData[i][0].toString().trim() : '';
+      if (cellId === selectedAnswerId.toString().trim()) {
+        selectedAnswerText = answersData[i][1] ? answersData[i][1].toString().trim() : '';
         rowToDelete = i + 1; // +1 because sheet rows are 1-indexed
         break;
       }
@@ -141,28 +143,25 @@ function submitResponse(name, selectedAnswerId, timestamp) {
   }
 }
 
-// Helper function to initialize sheets with your current data
-function initializeSheets() {
-  const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
-  
-  // Create Available Answers sheet
-  let answersSheet = spreadsheet.getSheetByName(ANSWERS_SHEET_NAME);
-  if (!answersSheet) {
-    answersSheet = spreadsheet.insertSheet(ANSWERS_SHEET_NAME);
+// Helper function to test the connection
+function testConnection() {
+  try {
+    const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const answersSheet = spreadsheet.getSheetByName(ANSWERS_SHEET_NAME);
+    const responsesSheet = spreadsheet.getSheetByName(RESPONSES_SHEET_NAME);
+    
+    console.log('✅ Spreadsheet found');
+    console.log('✅ Available Answers sheet:', answersSheet ? 'found' : 'NOT FOUND');
+    console.log('✅ Responses sheet:', responsesSheet ? 'found' : 'NOT FOUND');
+    
+    if (answersSheet) {
+      const data = answersSheet.getDataRange().getValues();
+      console.log('Available answers data:', data);
+    }
+    
+    return 'Connection test successful';
+  } catch (error) {
+    console.error('Connection test failed:', error);
+    return 'Connection test failed: ' + error.toString();
   }
-  answersSheet.clear();
-  answersSheet.getRange(1, 1, 1, 2).setValues([['ID', 'Text']]);
-  answersSheet.getRange(2, 1, 3, 2).setValues([
-    ['1', 'Apple'],
-    ['2', 'Banana'], 
-    ['3', 'Orange']
-  ]);
-  
-  // Create Responses sheet
-  let responsesSheet = spreadsheet.getSheetByName(RESPONSES_SHEET_NAME);
-  if (!responsesSheet) {
-    responsesSheet = spreadsheet.insertSheet(RESPONSES_SHEET_NAME);
-  }
-  responsesSheet.clear();
-  responsesSheet.getRange(1, 1, 1, 3).setValues([['Name', 'Selected Answer', 'Timestamp']]);
 }
