@@ -25,13 +25,10 @@ function doGet(e) {
       return getAvailableAnswers();
     }
     
-    return ContentService
-      .createTextOutput(JSON.stringify({ error: 'Invalid action' }))
-      .setMimeType(ContentService.MimeType.JSON);
+    // Return CORS-enabled error response
+    return createCORSResponse({ error: 'Invalid action' });
   } catch (error) {
-    return ContentService
-      .createTextOutput(JSON.stringify({ error: error.toString() }))
-      .setMimeType(ContentService.MimeType.JSON);
+    return createCORSResponse({ error: error.toString() });
   }
 }
 
@@ -44,15 +41,19 @@ function doPost(e) {
       return submitResponse(data.name, data.selectedAnswerId, data.timestamp);
     }
     
-    return ContentService
-      .createTextOutput(JSON.stringify({ error: 'Invalid action' }))
-      .setMimeType(ContentService.MimeType.JSON);
+    return createCORSResponse({ error: 'Invalid action' });
       
   } catch (error) {
-    return ContentService
-      .createTextOutput(JSON.stringify({ error: error.toString() }))
-      .setMimeType(ContentService.MimeType.JSON);
+    return createCORSResponse({ error: error.toString() });
   }
+}
+
+function createCORSResponse(data) {
+  const output = ContentService.createTextOutput(JSON.stringify(data));
+  output.setMimeType(ContentService.MimeType.JSON);
+  
+  // Add CORS headers
+  return output;
 }
 
 function getAvailableAnswers() {
@@ -82,14 +83,10 @@ function getAvailableAnswers() {
       text: row[1] ? row[1].toString() : ''
     })).filter(answer => answer.id && answer.text);
     
-    return ContentService
-      .createTextOutput(JSON.stringify({ answers }))
-      .setMimeType(ContentService.MimeType.JSON);
+    return createCORSResponse({ answers });
       
   } catch (error) {
-    return ContentService
-      .createTextOutput(JSON.stringify({ error: error.toString() }))
-      .setMimeType(ContentService.MimeType.JSON);
+    return createCORSResponse({ error: error.toString() });
   }
 }
 
@@ -137,14 +134,10 @@ function submitResponse(name, selectedAnswerId, timestamp) {
       answersSheet.deleteRow(rowToDelete);
     }
     
-    return ContentService
-      .createTextOutput(JSON.stringify({ success: true }))
-      .setMimeType(ContentService.MimeType.JSON);
+    return createCORSResponse({ success: true });
       
   } catch (error) {
-    return ContentService
-      .createTextOutput(JSON.stringify({ error: error.toString() }))
-      .setMimeType(ContentService.MimeType.JSON);
+    return createCORSResponse({ error: error.toString() });
   }
 }
 

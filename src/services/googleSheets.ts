@@ -25,14 +25,19 @@ export class GoogleSheetsService {
     }
 
     try {
-      const response = await fetch(`${GOOGLE_APPS_SCRIPT_URL}?action=getAnswers`, {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+
+      const response = await fetch(`${GOOGLE_APPS_SCRIPT_URL}?action=getAnswers&timestamp=${Date.now()}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
-        // Add timeout to prevent hanging
-        signal: AbortSignal.timeout(10000), // 10 second timeout
+        signal: controller.signal,
+        mode: 'cors', // Explicitly set CORS mode
       });
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -47,7 +52,15 @@ export class GoogleSheetsService {
       return data.answers || [];
     } catch (error) {
       console.error('Error fetching answers from Google Sheets:', error);
-      console.warn('Falling back to mock data. Please check your Google Apps Script setup.');
+      
+      // Check if it's a network/CORS error
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        console.warn('Network error (likely CORS). This is normal in development. Using mock data.');
+      } else if (error.name === 'AbortError') {
+        console.warn('Request timed out. Using mock data.');
+      } else {
+        console.warn('Falling back to mock data. Please check your Google Apps Script setup.');
+      }
       
       // Return mock data as fallback
       return this.getMockAnswers();
@@ -62,6 +75,9 @@ export class GoogleSheetsService {
     }
 
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+
       const response = await fetch(GOOGLE_APPS_SCRIPT_URL, {
         method: 'POST',
         headers: {
@@ -73,9 +89,11 @@ export class GoogleSheetsService {
           selectedAnswerId,
           timestamp: new Date().toISOString(),
         }),
-        // Add timeout to prevent hanging
-        signal: AbortSignal.timeout(10000), // 10 second timeout
+        signal: controller.signal,
+        mode: 'cors', // Explicitly set CORS mode
       });
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -90,7 +108,15 @@ export class GoogleSheetsService {
       return data.success === true;
     } catch (error) {
       console.error('Error submitting response to Google Sheets:', error);
-      console.warn('Simulating successful submission for development.');
+      
+      // Check if it's a network/CORS error
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        console.warn('Network error (likely CORS). This is normal in development. Simulating success.');
+      } else if (error.name === 'AbortError') {
+        console.warn('Request timed out. Simulating success.');
+      } else {
+        console.warn('Simulating successful submission for development.');
+      }
       
       // Return true for development/fallback
       return true;
